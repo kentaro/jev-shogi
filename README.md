@@ -1,10 +1,50 @@
 # jev-shogi
 
-判定特化モデル Jev に将棋を指させる。毎手、合法手すべてを選択肢として1回の推論で選ばせる（探索なし）。
-形勢判断と自玉の危険度も同じリクエストで返させる。
+判定特化モデル [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)（TypeSafe AI）に将棋を指させる実験。
+Jev は文章を生成せず、選択肢ごとの確率だけを返すモデル。ここでは合法手すべてを選択肢として渡し、1回の推論で指し手を選ばせる。探索エンジンは使わない。
 
-対局相手は手元の Fairy-Stockfish。棋譜（KIF）、1手ごとのレイテンシ・トークン数・コスト、対局動画を `games/` に残す。
+Jev は [ロリポップ！AIゲートウェイ](https://lolipop.jp/ai/gateway/) 経由で呼んでいる（`POST /v1/systemone`、モデル `typesafe/jev-latest`）。
+
+## 結果（2026-09-18）
+
+相手は手元で動かした [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) 14.0.1（1手0.1秒）。Jev は先手。
+
+| 相手 | 最強設定と同じ手を指した割合 | 結果 | Jev の判断 p50 | 入力トークン | 棋譜 | 動画 |
+|---|---|---|---|---|---|---|
+| 最弱（Skill -20） | 9%（35手中3手） | **71手で Jev の勝ち（詰み）** | 1,466ms | 221,841 | [KIF](games/20260918-214930-skill-20/game.kif) | [mp4](games/20260918-214930-skill-20/game.mp4) |
+| 弱（Skill -10） | 14%（37手中5手） | **75手で Jev の勝ち（詰み）** | 3,130ms | 270,992 | [KIF](games/20260918-215312-skill-10/game.kif) | [mp4](games/20260918-215312-skill-10/game.mp4) |
+| 中（Skill 0） | 33%（27手中9手） | 54手で負け（詰み） | 3,058ms | 128,412 | [KIF](games/20260918-215312-skill0/game.kif) | [mp4](games/20260918-215312-skill0/game.mp4) |
+| 強（Skill 10） | 38%（29手中11手） | 58手で負け（詰み） | 3,297ms | 145,492 | [KIF](games/20260918-215312-skill10/game.kif) | [mp4](games/20260918-215312-skill10/game.mp4) |
+| 最強（Skill 20） | 50%（16手中8手） | 32手で負け（詰み） | 4,163ms | 78,114 | [KIF](games/20260918-215312-skill20/game.kif) | [mp4](games/20260918-215312-skill20/game.mp4) |
+
+- 「最強設定と同じ手を指した割合」は、相手の各手を Skill 20・1手1秒のエンジンが選ぶ手と照合した一致率。相手の手加減の目安で、将棋の段級位との対応はない。
+- 判断時間は1手あたり2リクエストの合計。弱以下の4局は同時に回したので遅くなっている（1局だけのときは約1.5秒）。
+- 5局の入力は合計約84万トークン。通常単価（入力 $0.042/100万トークン、出力無料）で約 $0.035。
+- 改良前の版（1回の判断だけ、事実は取る駒と王手のみ）は、最強設定に42手で負けた（[KIF](games/20260918-214638-skill20/game.kif)）。飛車を４八と３八で往復させ続けた。
+- 負けた3局は、玉を囲わないまま攻められて玉が中段や端に逃げ出し、詰まされた。
+
+各対局ディレクトリの中身:
+
+- `game.kif` 棋譜
+- `moves.jsonl` 1手ごとの記録（Jev の手は候補数・上位の候補と確率・形勢判断・自玉の危険度・レイテンシ・トークン数・コスト）
+- `summary.json` 結果と合計
+- `opponent_strength.json` 相手の一致率
+- `game.mp4` 盤面の動画
+
+## しくみ
+
+判断はすべて Jev がする。コードが渡すのはルール上の事実だけ。
+
+1. 合法手すべてを choice の候補にする。各候補に1〜2手先の事実を説明として付ける（取る駒、王手・詰み、動かした駒がタダで取られるか、他の駒が浮くか、指した後に相手の1手詰みがあるか、直前の手を戻す往復か）。同じリクエストで形勢と自玉の危険度も聞く
+2. 上位6手について、指した後の局面を並べ、どれが最善かと各局面の形勢を1リクエストでまとめて判定させる
+
+## 実行
 
 ```
-AI_GATEWAY_API_KEY_FILE=<キーのファイル> uv run python -m jev_shogi.local --skill -10 --movetime 100 --video
+brew install fairy-stockfish
+AI_GATEWAY_API_KEY_FILE=<APIキーを書いたファイル> uv run python -m jev_shogi.local --skill -10 --movetime 100 --video
+uv run python -m jev_shogi.calibrate games/<対局ディレクトリ>   # 相手の一致率
+uv run python -m jev_shogi.render games/<対局ディレクトリ>      # 動画の作り直し
 ```
+
+Web の対局サイトでは使わないこと。多くのサイトは対局中のソフト使用を禁止している。
