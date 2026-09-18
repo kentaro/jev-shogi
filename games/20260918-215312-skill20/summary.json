@@ -1,5 +1,5 @@
 {
- "result": "まで32手で後手の勝ち",
+ "result": "まで32手で後手の勝ち（詰み）",
  "plies": 32,
  "opponent": "Fairy-Stockfish 14.0.1 (Skill_Level 20, 100ms/手)",
  "jev_moves": 16,

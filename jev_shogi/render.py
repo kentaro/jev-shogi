@@ -57,7 +57,10 @@ def main():
         b.push(mv)
         last = mv
         snap(12)
+    mated = "▲Jev" if b.is_checkmate() and b.turn == shogi.BLACK else "△相手" if b.is_checkmate() else None
     panel = [(summary["result"], rnd.fb, (255, 230, 150)),
+             (f"{mated}の玉に王手がかかり、逃げ場も受けもない" if mated else "", None, (255, 150, 150)),
+             ("", None, None),
              (f"Jev の判断 {summary['jev_moves']} 回　p50 {summary['jev_ms_p50']} ms", None, None),
              (f"入力 {summary['input_tokens']:,} トークン", None, None),
              (f"通常単価換算 ${summary['cost_usd_list_price']:.5f}", None, None),

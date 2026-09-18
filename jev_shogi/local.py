@@ -223,7 +223,7 @@ def main():
 
     if b.is_checkmate():
         winner = "後手" if b.turn == shogi.BLACK else "先手"
-        result_line = f"まで{len(usi)}手で{winner}の勝ち"
+        result_line = f"まで{len(usi)}手で{winner}の勝ち（詰み）"
     elif result:
         result_line = f"まで{len(usi)}手（{result}）"
     elif b.is_fourfold_repetition():

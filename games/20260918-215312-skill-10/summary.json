@@ -1,5 +1,5 @@
 {
- "result": "まで75手で先手の勝ち",
+ "result": "まで75手で先手の勝ち（詰み）",
  "plies": 75,
  "opponent": "Fairy-Stockfish 14.0.1 (Skill_Level -10, 100ms/手)",
  "jev_moves": 38,
