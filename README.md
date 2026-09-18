@@ -31,6 +31,18 @@ Jev は [ロリポップ！AIゲートウェイ](https://lolipop.jp/ai/gateway/)
 - `opponent_strength.json` 相手の一致率
 - `game.mp4` 盤面の動画
 
+## 先を読ませた版（v2・v3）
+
+`--player v2` は上位6手それぞれに相手の最善応手を Jev に選ばせ、応手後の局面を評価させる（1手3リクエスト）。`--player v3` は6本の手順を3手先まで Jev に指し進めさせてから、読み切った局面だけを評価させる（1手5リクエスト）。どちらも事実に玉の周りの守り・相手の利き・駒割を足している。
+
+| 相手 | 2段階（v1） | 応手を読む（v2） | 3手読んでから評価（v3） |
+|---|---|---|---|
+| 中 | 54手で負け | 54手で負け | 80手で負け |
+| 強 | 58手で負け | 66手で負け | 28手で負け |
+| 最強 | 32手で負け | 46手で負け | 48手で負け |
+
+Jev が読みの中で予想した相手の応手が実際の手と一致したのは、v2 で68手中10手、v3 で70手中12手。対局ごとの記録は `games/*-v2-*`・`games/*-v3-*`。
+
 ## しくみ
 
 判断はすべて Jev がする。コードが渡すのはルール上の事実だけ。
@@ -42,7 +54,7 @@ Jev は [ロリポップ！AIゲートウェイ](https://lolipop.jp/ai/gateway/)
 
 ```
 brew install fairy-stockfish
-AI_GATEWAY_API_KEY_FILE=<APIキーを書いたファイル> uv run python -m jev_shogi.local --skill -10 --movetime 100 --video
+AI_GATEWAY_API_KEY_FILE=<APIキーを書いたファイル> uv run python -m jev_shogi.local --player v1 --skill -10 --movetime 100 --video   # v2 / v3 も指定可
 uv run python -m jev_shogi.calibrate games/<対局ディレクトリ>   # 相手の一致率
 uv run python -m jev_shogi.render games/<対局ディレクトリ>      # 動画の作り直し
 ```

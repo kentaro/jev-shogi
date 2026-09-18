@@ -19,7 +19,7 @@ def main():
     game = sys.argv[1]
     recs = [json.loads(l) for l in open(os.path.join(game, "moves.jsonl"))]
     summary = json.load(open(os.path.join(game, "summary.json")))
-    skill = int(game.rstrip("/").rsplit("skill", 1)[1])
+    skill = int(game.rstrip("/").rsplit("skill", 1)[1])  # ディレクトリ名 <日時>[-v2]-skill<N>
     label = {-20: "最弱", -10: "弱", 0: "中", 10: "強", 20: "最強"}.get(skill, str(skill))
     sp = os.path.join(game, "opponent_strength.json")
     rate = f"・最強設定との一致率{json.load(open(sp))['match_rate'] * 100:.0f}%" if os.path.exists(sp) else ""

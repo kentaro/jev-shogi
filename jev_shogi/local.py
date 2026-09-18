@@ -21,7 +21,8 @@ import shogi.KIF
 from PIL import Image, ImageDraw, ImageFont
 
 from .jev import MODEL, USD_PER_INPUT_TOKEN
-from .player import decide, jp
+from . import player, player2, player3
+from .player import jp
 
 FONT = "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc"
 FONT_BOLD = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
@@ -128,10 +129,13 @@ def main():
     ap.add_argument("--max-plies", type=int, default=256)
     ap.add_argument("--out", default="games")
     ap.add_argument("--video", action="store_true")
+    ap.add_argument("--player", default="v3", choices=["v1", "v2", "v3"],
+                    help="v1: 2段階 / v2: 相手の応手まで読む3段階 / v3: 3手読んでから評価（読みと評価を分離）")
     a = ap.parse_args()
 
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    out = os.path.join(a.out, f"{stamp}-skill{a.skill}")
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + f"-{os.getpid()}"
+    out = os.path.join(a.out, f"{stamp}-{a.player}-skill{a.skill}")
+    decide = {"v1": player, "v2": player2, "v3": player3}[a.player].decide
     os.makedirs(out, exist_ok=True)
     log = open(os.path.join(out, "moves.jsonl"), "w")
     started = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
@@ -244,7 +248,7 @@ def main():
     open(os.path.join(out, "game.kif"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
     ms = sorted(tot["ms"])
-    summary = {"result": result_line, "plies": len(usi), "opponent": opp,
+    summary = {"player": a.player, "result": result_line, "plies": len(usi), "opponent": opp,
                "jev_moves": len(ms), "jev_requests": tot["requests"], "jev_failed": tot["failed"],
                "input_tokens": tot["input_tokens"], "output_tokens": tot["output_tokens"],
                "cost_usd_list_price": round(tot["input_tokens"] * USD_PER_INPUT_TOKEN, 6),

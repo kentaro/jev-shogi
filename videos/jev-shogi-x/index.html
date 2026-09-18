@@ -1,10 +1,33 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
+      @font-face {
+        font-family: "JevSerif";
+        src: url("assets/fonts/noto-serif-jp-700.woff2") format("woff2");
+        font-weight: 700;
+      }
+      @font-face {
+        font-family: "JevSerif";
+        src: url("assets/fonts/noto-serif-jp-900.woff2") format("woff2");
+        font-weight: 900;
+      }
+      :root {
+        --bg: #16110c;
+        --bg2: #211910;
+        --fg: #f4ead8;
+        --muted: #bfae93;
+        --accent: #e0522f;
+        --wood: #deb06a;
+        --wood-dark: #b98543;
+        --ink: #2a1a0c;
+        --serif: "JevSerif", serif;
+        --sans: "Noto Sans JP", sans-serif;
+        --mono: "JetBrains Mono", monospace;
+      }
       * {
         margin: 0;
         padding: 0;
@@ -16,21 +39,567 @@
         width: 1920px;
         height: 1080px;
         overflow: hidden;
-        background: #0a0a0a;
+        background: var(--bg);
       }
       #root {
+        position: relative;
         width: 100%;
         height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--sans);
+      }
+      .bg-glow {
+        position: absolute;
+        width: 1400px;
+        height: 1400px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(224, 82, 47, 0.22) 0%, rgba(224, 82, 47, 0) 65%);
+        left: 820px;
+        top: -260px;
+      }
+      .grain {
+        position: absolute;
+        inset: 0;
+        opacity: 0.16;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.8 0 0 0 0 0.6 0 0 0 0.55 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .label {
+        font-family: var(--mono);
+        font-size: 26px;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .rule {
+        display: block;
+        height: 4px;
+        background: var(--accent);
+        transform-origin: left center;
+      }
+
+      /* ---------- board ---------- */
+      .board {
+        position: relative;
+        width: 828px;
+        height: 888px;
+        padding: 36px;
+        background:
+          repeating-linear-gradient(
+            96deg,
+            rgba(120, 72, 20, 0) 0px,
+            rgba(120, 72, 20, 0.1) 3px,
+            rgba(120, 72, 20, 0) 9px,
+            rgba(120, 72, 20, 0.06) 17px,
+            rgba(120, 72, 20, 0) 26px
+          ),
+          linear-gradient(160deg, #e8bf7a 0%, #d9a55c 55%, #cf9950 100%);
+        border-radius: 10px;
+        box-shadow:
+          0 40px 90px rgba(0, 0, 0, 0.55),
+          inset 0 0 0 3px rgba(80, 45, 10, 0.35);
+      }
+      .grid {
+        position: relative;
+        width: 756px;
+        height: 816px;
+        display: grid;
+        grid-template-columns: repeat(9, 84px);
+        grid-template-rows: repeat(9, 90.6px);
+        border: 3px solid var(--ink);
+      }
+      .cell {
+        position: relative;
+        border-right: 2px solid rgba(42, 26, 12, 0.85);
+        border-bottom: 2px solid rgba(42, 26, 12, 0.85);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
       }
-      #title {
-        color: #f4f4f5;
-        font-size: 72px;
-        font-weight: 600;
-        letter-spacing: -0.03em;
+      .cell:nth-child(9n) {
+        border-right: none;
+      }
+      .cell:nth-last-child(-n + 9) {
+        border-bottom: none;
+      }
+      .piece {
+        width: 70px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 10px;
+        clip-path: polygon(50% 0%, 88% 16%, 100% 100%, 0% 100%, 12% 16%);
+        background: linear-gradient(170deg, #f6dcaa 0%, #e8c283 100%);
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 44px;
+        line-height: 1;
+        color: var(--ink);
+      }
+      .piece.gote {
+        transform: rotate(180deg);
+      }
+      .piece.promo {
+        color: #b3261e;
+      }
+      .cell.hl::before {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        background: rgba(224, 82, 47, 0.45);
+      }
+      .dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+
+      /* ---------- S1 ---------- */
+      #s1-board-wrap {
+        position: absolute;
+        left: 1200px;
+        top: 96px;
+        width: 828px;
+        height: 888px;
+      }
+      .s1-copy {
+        position: absolute;
+        left: 110px;
+        top: 150px;
+        width: 1060px;
+        display: flex;
+        flex-direction: column;
+        gap: 34px;
+      }
+      .s1-title {
+        font-family: var(--serif);
+        font-weight: 900;
+        line-height: 1.16;
+        letter-spacing: -0.02em;
+        color: var(--fg);
+      }
+      .s1-title .l1 {
+        display: block;
+        font-size: 100px;
+      }
+      .s1-title .l2 {
+        display: block;
+        font-size: 110px;
+      }
+      .s1-title .jev {
+        color: var(--accent);
+      }
+      .s1-sub {
+        font-size: 42px;
+        font-weight: 700;
+        line-height: 1.45;
+        color: var(--fg);
+        max-width: 1060px;
+      }
+      .s1-meta {
+        position: absolute;
+        left: 110px;
+        bottom: 96px;
+        font-size: 30px;
+        color: var(--muted);
+        display: flex;
+        gap: 28px;
+        align-items: center;
+      }
+      .s1-meta b {
+        color: var(--fg);
+        font-weight: 700;
+      }
+
+      /* ---------- S2 ---------- */
+      .s2-head {
+        position: absolute;
+        left: 110px;
+        top: 96px;
+        width: 1700px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .s2-title {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 78px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+      .s2-flow {
+        position: absolute;
+        left: 110px;
+        top: 360px;
+        width: 1700px;
+        height: 470px;
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+      }
+      .step {
+        position: relative;
+        flex: 1 1 0;
+        border: 3px solid rgba(244, 234, 216, 0.28);
+        background: rgba(244, 234, 216, 0.04);
+        border-radius: 14px;
+        padding: 36px 36px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .step.big {
+        flex: 1.25 1 0;
+      }
+      .step-no {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 28px;
+        color: var(--accent);
+      }
+      .step-text {
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+      .ln {
+        display: block;
+      }
+      .step-note {
+        font-size: 28px;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+      .arrow {
+        flex: 0 0 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 60px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .bars {
+        margin-top: auto;
+        height: 150px;
+        display: flex;
+        align-items: flex-end;
+        gap: 9px;
+      }
+      .bar {
+        display: block;
+        flex: 1 1 0;
+        height: 100%;
+        background: rgba(244, 234, 216, 0.3);
+        transform-origin: bottom center;
+        border-radius: 3px 3px 0 0;
+      }
+      .bar.top {
+        background: var(--accent);
+      }
+      .minis {
+        margin-top: auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .mini {
+        height: 66px;
+        border-radius: 6px;
+        background:
+          repeating-linear-gradient(0deg, rgba(42, 26, 12, 0.55) 0 2px, transparent 2px 16px),
+          repeating-linear-gradient(90deg, rgba(42, 26, 12, 0.55) 0 2px, transparent 2px 16px),
+          linear-gradient(160deg, #e8bf7a, #cf9950);
+      }
+      .pick {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .pick .piece {
+        width: 96px;
+        height: 110px;
+        font-size: 60px;
+        padding-top: 14px;
+      }
+      .pick-mark {
+        font-size: 34px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .s2-foot {
+        position: absolute;
+        left: 110px;
+        top: 880px;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        font-size: 44px;
+        font-weight: 700;
+      }
+      .no-badge {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 40px;
+        color: var(--bg);
+        background: var(--accent);
+        padding: 6px 22px 8px;
+        border-radius: 8px;
+      }
+
+      /* ---------- S3 ---------- */
+      #s3-video-wrap {
+        position: absolute;
+        left: 80px;
+        top: 140px;
+        width: 1248px;
+        height: 800px;
+      }
+      #s3-video {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1248px;
+        height: 800px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .s3-frame {
+        position: absolute;
+        left: 72px;
+        top: 132px;
+        width: 1264px;
+        height: 816px;
+        border: 4px solid var(--accent);
+        border-radius: 12px;
+      }
+      .s3-side {
+        position: absolute;
+        left: 1400px;
+        top: 140px;
+        width: 440px;
+        height: 800px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+      .s3-title {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 52px;
+        line-height: 1.25;
+      }
+      .s3-vs {
+        font-size: 34px;
+        line-height: 1.45;
+        font-weight: 700;
+        color: var(--fg);
+      }
+      .s3-vs .ln span {
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .s3-note {
+        font-size: 28px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .s3-result {
+        margin-top: auto;
+        padding: 28px 26px;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #1b0f07;
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      /* ---------- S4 ---------- */
+      .s4-head {
+        position: absolute;
+        left: 110px;
+        top: 90px;
+        width: 1700px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .s4-title {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 74px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+      .s4-sub {
+        font-size: 32px;
+        color: var(--muted);
+      }
+      .table {
+        position: absolute;
+        left: 110px;
+        top: 350px;
+        width: 1700px;
+        display: flex;
+        flex-direction: column;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 250px 300px 1fr 240px;
+        align-items: center;
+        height: 124px;
+        border-top: 2px solid rgba(244, 234, 216, 0.22);
+        font-size: 44px;
+      }
+      .row:last-child {
+        border-bottom: 2px solid rgba(244, 234, 216, 0.22);
+      }
+      .lvl {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 56px;
+      }
+      .pips {
+        display: flex;
+        gap: 12px;
+      }
+      .pip {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 3px solid rgba(244, 234, 216, 0.45);
+      }
+      .pip.on {
+        background: var(--muted);
+        border-color: var(--muted);
+      }
+      .res {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .res span {
+        font-weight: 400;
+        color: var(--muted);
+        font-size: 34px;
+      }
+      .badge {
+        justify-self: end;
+        width: 200px;
+        height: 84px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 48px;
+      }
+      .badge.win {
+        background: var(--accent);
+        color: #1b0f07;
+      }
+      .badge.lose {
+        border: 3px solid rgba(244, 234, 216, 0.5);
+        color: var(--fg);
+      }
+      .row.win .res {
+        color: var(--fg);
+      }
+
+      /* ---------- S5 ---------- */
+      .s5-head {
+        position: absolute;
+        left: 110px;
+        top: 90px;
+      }
+      .stats {
+        position: absolute;
+        left: 110px;
+        top: 190px;
+        width: 1700px;
+        display: grid;
+        grid-template-columns: 1fr 1.15fr 1.15fr;
+        gap: 0;
+      }
+      .stat {
+        padding: 30px 40px 30px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        border-left: 3px solid rgba(244, 234, 216, 0.22);
+        padding-left: 40px;
+      }
+      .stat:first-child {
+        border-left: none;
+        padding-left: 0;
+      }
+      .stat-k {
+        font-size: 32px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .stat-v {
+        font-family: var(--serif);
+        font-weight: 900;
+        font-size: 104px;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        color: var(--fg);
+      }
+      .stat-v small {
+        font-size: 56px;
+      }
+      .stat-n {
+        font-size: 28px;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+      .stat-n.hot {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .s5-cta {
+        position: absolute;
+        left: 110px;
+        top: 620px;
+        width: 1700px;
+        padding: 44px 50px;
+        border-radius: 16px;
+        border: 4px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .cta-k {
+        font-size: 38px;
+        font-weight: 700;
+      }
+      .cta-url {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 62px;
+        color: var(--fg);
+        letter-spacing: -0.01em;
+      }
+      .s5-foot {
+        position: absolute;
+        left: 110px;
+        top: 850px;
+        font-size: 28px;
+        color: var(--muted);
       }
     </style>
   </head>
@@ -39,17 +608,272 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="10"
+      data-duration="31.5"
       data-width="1920"
       data-height="1080"
     >
-      <h1 id="title" class="clip" data-start="0" data-duration="10" data-track-index="0">Title</h1>
+      <div class="bg-glow" id="glow"></div>
+      <div class="grain"></div>
+
+      <!-- ================= S1: title (visible at t=0) ================= -->
+      <section id="s1" class="scene clip" data-start="0" data-duration="4.5" data-track-index="1">
+        <div id="s1-board-wrap" data-layout-allow-overflow="true">
+          <div class="board" id="s1-board"><div class="grid" id="s1-grid"></div></div>
+        </div>
+        <div class="s1-copy">
+          <div class="label">JEV × SHOGI</div>
+          <h1 class="s1-title">
+            <span class="l1">判定特化AI<span class="jev">『Jev』</span>に</span>
+            <span class="l2">将棋を指させてみた</span>
+          </h1>
+          <span class="rule" id="s1-rule" style="width: 180px"></span>
+          <p class="s1-sub">文章を生成しないAIが、合法手ぜんぶから1手を選ぶ</p>
+        </div>
+        <div class="s1-meta">
+          <span>TypeSafe AI のモデル <b>Jev</b></span>
+          <span>／</span>
+          <span><b>ロリポップ！AIゲートウェイ</b> 経由で呼び出し</span>
+        </div>
+      </section>
+
+      <!-- ================= S2: how it works ================= -->
+      <section id="s2" class="scene clip" data-start="4.5" data-duration="6" data-track-index="1">
+        <div class="s2-head">
+          <div class="label" id="s2-label">しくみ</div>
+          <h2 class="s2-title" id="s2-title">毎手、合法手すべてを選択肢として渡す</h2>
+        </div>
+        <div class="s2-flow">
+          <div class="step big" id="s2-step1">
+            <div class="step-no">STEP 1</div>
+            <div class="step-text">合法手すべてを Jev に渡す</div>
+            <div class="step-note">1回のリクエストで手ごとの確率が返る</div>
+            <div class="bars" id="s2-bars"></div>
+          </div>
+          <div class="arrow" id="s2-a1">→</div>
+          <div class="step" id="s2-step2">
+            <div class="step-no">STEP 2</div>
+            <div class="step-text"><span class="ln">上位6手を</span><span class="ln">指した後の局面で比べる</span></div>
+            <div class="step-note">もう1回リクエスト</div>
+            <div class="minis" id="s2-minis">
+              <div class="mini"></div><div class="mini"></div><div class="mini"></div>
+              <div class="mini"></div><div class="mini"></div><div class="mini"></div>
+            </div>
+          </div>
+          <div class="arrow" id="s2-a2">→</div>
+          <div class="step" id="s2-step3">
+            <div class="step-no">STEP 3</div>
+            <div class="step-text">1手を選んで指す</div>
+            <div class="pick" id="s2-pick">
+              <div class="piece">角</div>
+              <div class="pick-mark">この1手</div>
+            </div>
+          </div>
+        </div>
+        <div class="s2-foot" id="s2-foot">
+          <span class="no-badge">探索なし</span>
+          <span>探索エンジンは使わない。Jev の判定だけで指す</span>
+        </div>
+      </section>
+
+      <!-- ================= S3: real game footage ================= -->
+      <section id="s3" class="scene clip" data-start="10.5" data-duration="10" data-track-index="1">
+        <div class="s3-frame" id="s3-frame"></div>
+        <div class="s3-side">
+          <div class="label">実際の対局</div>
+          <div class="s3-title">終盤から詰みまで</div>
+          <div class="s3-vs"><span class="ln">先手 Jev</span><span class="ln"><span>vs</span> 将棋エンジン「弱」</span></div>
+          <div class="s3-note">対局映像を等倍で抜粋</div>
+          <div class="s3-result" id="s3-result"><span class="ln">75手で</span><span class="ln">Jev の勝ち（詰み）</span></div>
+        </div>
+      </section>
+      <div id="s3-video-wrap">
+        <video
+          id="s3-video"
+          class="clip"
+          src="assets/game-weak.mp4"
+          data-start="10.5"
+          data-duration="10"
+          data-media-start="32.5"
+          data-track-index="2"
+          muted
+          playsinline
+        ></video>
+      </div>
+
+      <!-- ================= S4: results ================= -->
+      <section id="s4" class="scene clip" data-start="20.5" data-duration="6" data-track-index="1">
+        <div class="s4-head">
+          <div class="label">戦績</div>
+          <h2 class="s4-title">弱い2段階には勝ち、中以上には負け</h2>
+          <div class="s4-sub">相手は将棋エンジン Fairy-Stockfish（強さ5段階）</div>
+        </div>
+        <div class="table" id="s4-table">
+          <div class="row win">
+            <div class="lvl">最弱</div>
+            <div class="pips"><i class="pip on"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
+            <div class="res">71手 <span>詰み</span></div>
+            <div class="badge win">勝ち</div>
+          </div>
+          <div class="row win">
+            <div class="lvl">弱</div>
+            <div class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></div>
+            <div class="res">75手 <span>詰み</span></div>
+            <div class="badge win">勝ち</div>
+          </div>
+          <div class="row">
+            <div class="lvl">中</div>
+            <div class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i><i class="pip"></i></div>
+            <div class="res">54手 <span>詰み</span></div>
+            <div class="badge lose">負け</div>
+          </div>
+          <div class="row">
+            <div class="lvl">強</div>
+            <div class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i></div>
+            <div class="res">58手 <span>詰み</span></div>
+            <div class="badge lose">負け</div>
+          </div>
+          <div class="row">
+            <div class="lvl">最強</div>
+            <div class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i></div>
+            <div class="res">32手 <span>詰み</span></div>
+            <div class="badge lose">負け</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= S5: cost / CTA ================= -->
+      <section id="s5" class="scene clip" data-start="26.5" data-duration="5" data-track-index="1">
+        <div class="s5-head label">速さとコスト</div>
+        <div class="stats">
+          <div class="stat" id="s5-st1">
+            <div class="stat-k">1手の判断</div>
+            <div class="stat-v">約1.5<small>秒</small></div>
+            <div class="stat-n">1局だけで回したとき</div>
+          </div>
+          <div class="stat" id="s5-st2">
+            <div class="stat-k">5局ぶんの入力</div>
+            <div class="stat-v">約84<small>万トークン</small></div>
+            <div class="stat-n">ロリポップ！AIゲートウェイ経由</div>
+          </div>
+          <div class="stat" id="s5-st3">
+            <div class="stat-k">通常単価でも</div>
+            <div class="stat-v">約$0.035</div>
+            <div class="stat-n hot">2026年9月24日まで無料キャンペーン中</div>
+          </div>
+        </div>
+        <div class="s5-cta" id="s5-cta">
+          <div class="cta-k">コードと棋譜</div>
+          <div class="cta-url">github.com/kentaro/jev-shogi</div>
+        </div>
+        <div class="s5-foot">Jev：TypeSafe AI の判定特化モデル。文章を生成せず、選択肢ごとの確率だけを返す</div>
+      </section>
     </div>
+
     <script>
+      // ---- build the S1 board (standard opening position, deterministic) ----
+      (function buildBoard() {
+        const rows = [
+          ["香g", "桂g", "銀g", "金g", "王g", "金g", "銀g", "桂g", "香g"],
+          ["", "飛g", "", "", "", "", "", "角g", ""],
+          ["歩g", "歩g", "歩g", "歩g", "歩g", "歩g", "歩g", "歩g", "歩g"],
+          ["", "", "", "", "", "", "", "", ""],
+          ["", "", "", "", "", "", "", "", ""],
+          ["", "", "歩s", "", "", "", "", "", ""],
+          ["歩s", "歩s", "", "歩s", "歩s", "歩s", "歩s", "歩s", "歩s"],
+          ["", "角s", "", "", "", "", "", "飛s", ""],
+          ["香s", "桂s", "銀s", "金s", "玉s", "金s", "銀s", "桂s", "香s"],
+        ];
+        const grid = document.getElementById("s1-grid");
+        rows.forEach((row, r) => {
+          row.forEach((p, c) => {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            if (r === 5 && c === 2) cell.classList.add("hl");
+            if (p) {
+              const pc = document.createElement("div");
+              pc.className = "piece" + (p[1] === "g" ? " gote" : "");
+              pc.textContent = p[0];
+              cell.appendChild(pc);
+            }
+            grid.appendChild(cell);
+          });
+        });
+        [
+          [3, 3],
+          [3, 6],
+          [6, 3],
+          [6, 6],
+        ].forEach(([r, c]) => {
+          const d = document.createElement("div");
+          d.className = "dot";
+          d.style.left = c * 84 - 7 + "px";
+          d.style.top = r * 90.6 - 7 + "px";
+          grid.appendChild(d);
+        });
+      })();
+
+      // ---- S2 probability bars (deterministic, no values shown) ----
+      (function buildBars() {
+        const hs = [0.95, 0.72, 0.6, 0.5, 0.42, 0.36, 0.28, 0.23, 0.19, 0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05];
+        const bars = document.getElementById("s2-bars");
+        hs.forEach((h, i) => {
+          const b = document.createElement("span");
+          b.className = "bar" + (i < 6 ? " top" : "");
+          b.dataset.h = h;
+          bars.appendChild(b);
+        });
+      })();
+
       const tl = gsap.timeline({ paused: true });
-      // Example: tl.fromTo("#title", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6 }, 0);
+
+      // ambient: glow breathe + grain-free drift across whole piece
+      tl.fromTo("#glow", { scale: 0.92, x: 0 }, { scale: 1.08, x: -60, duration: 7.875, ease: "sine.inOut", yoyo: true, repeat: 3 }, 0);
+
+      // ---- S1 (everything already visible at t=0; only ambient motion) ----
+      tl.fromTo("#s1-board", { rotation: -5, y: 0, scale: 1 }, { rotation: -2.5, y: -18, scale: 1.03, duration: 4.5, ease: "sine.inOut" }, 0);
+      tl.fromTo("#s1-rule", { scaleX: 1 }, { scaleX: 2.2, duration: 1.2, ease: "power3.out" }, 0.4);
+
+      // ---- S2 ----
+      const S2 = 4.5;
+      tl.fromTo("#s2-title", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, S2 + 0.05);
+      tl.fromTo("#s2-label", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, S2);
+      tl.fromTo("#s2-step1", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.4)" }, S2 + 0.35);
+      document.querySelectorAll("#s2-bars .bar").forEach((b, i) => {
+        tl.fromTo(b, { scaleY: 0 }, { scaleY: parseFloat(b.dataset.h), duration: 0.6, ease: "power3.out" }, S2 + 0.75 + i * 0.03);
+      });
+      tl.fromTo("#s2-a1", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power2.out" }, S2 + 1.7);
+      tl.fromTo("#s2-step2", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, S2 + 1.85);
+      tl.fromTo("#s2-minis .mini", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2)", stagger: 0.06 }, S2 + 2.2);
+      tl.fromTo("#s2-a2", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "power2.out" }, S2 + 3.0);
+      tl.fromTo("#s2-step3", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, S2 + 3.15);
+      tl.fromTo("#s2-pick .piece", { scale: 1.8, rotation: -20, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.45, ease: "power4.out" }, S2 + 3.5);
+      tl.fromTo("#s2-foot", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, S2 + 4.0);
+
+      // ---- S3 ----
+      const S3 = 10.5;
+      tl.fromTo("#s3-video-wrap", { scale: 0.97, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, S3);
+      tl.fromTo("#s3-video-wrap", { y: 0 }, { y: -6, duration: 9.3, ease: "none", immediateRender: false }, S3 + 0.5);
+      tl.fromTo("#s3-frame", { opacity: 0 }, { opacity: 1, duration: 0.5 }, S3 + 0.2);
+      tl.fromTo(".s3-side > *:not(.s3-result)", { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power2.out", stagger: 0.12 }, S3 + 0.3);
+      // result card lands when the source video reaches the mate (~39.2s source => +6.7s)
+      tl.fromTo("#s3-result", { y: 50, scale: 0.9, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.8)" }, S3 + 6.8);
+
+      // ---- S4 ----
+      const S4 = 20.5;
+      tl.fromTo(".s4-head > *", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.1 }, S4);
+      tl.fromTo("#s4-table .row", { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out", stagger: 0.1 }, S4 + 0.5);
+      tl.fromTo("#s4-table .badge", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2.2)", stagger: 0.1 }, S4 + 0.9);
+
+      // ---- S5 ----
+      const S5 = 26.5;
+      tl.fromTo(".s5-head", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, S5);
+      tl.fromTo("#s5-st1", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power4.out" }, S5 + 0.15);
+      tl.fromTo("#s5-st2", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power4.out" }, S5 + 0.45);
+      tl.fromTo("#s5-st3", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power4.out" }, S5 + 0.75);
+      tl.fromTo("#s5-cta", { scale: 0.94, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.6)" }, S5 + 1.3);
+      tl.fromTo(".s5-foot", { opacity: 0 }, { opacity: 1, duration: 0.5 }, S5 + 1.7);
+
       window.__timelines["main"] = tl;
-      tl.seek(0);
     </script>
   </body>
 </html>

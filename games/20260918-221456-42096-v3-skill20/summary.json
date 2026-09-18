@@ -1,0 +1,16 @@
+{
+ "player": "v3",
+ "result": "まで48手で後手の勝ち（詰み）",
+ "plies": 48,
+ "opponent": "Fairy-Stockfish 14.0.1 (Skill_Level 20, 100ms/手)",
+ "jev_moves": 24,
+ "jev_requests": 105,
+ "jev_failed": 1,
+ "input_tokens": 833420,
+ "output_tokens": 123635,
+ "cost_usd_list_price": 0.035004,
+ "cost_note": "2026-09-18〜24 は無料キャンペーン。通常単価（入力 $0.042/100万トークン、出力無料）での換算",
+ "jev_ms_p50": 5726,
+ "jev_ms_p95": 16869,
+ "jev_ms_max": 17078
+}
