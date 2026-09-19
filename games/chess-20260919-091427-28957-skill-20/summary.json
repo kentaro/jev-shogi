@@ -1,0 +1,13 @@
+{
+ "game": "chess",
+ "result": "51手でJev（白）の勝ち（CHECKMATE）",
+ "plies": 51,
+ "opponent": "Fairy-Stockfish 14.0.1 chess (Skill Level -20, 100ms/手)",
+ "jev_moves": 26,
+ "jev_requests": 52,
+ "jev_failed": 0,
+ "input_tokens": 128202,
+ "output_tokens": 15592,
+ "cost_usd_list_price": 0.005384,
+ "jev_ms_p50": 2365
+}

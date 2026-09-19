@@ -1,0 +1,13 @@
+{
+ "game": "chess",
+ "result": "38手で相手（黒）の勝ち（CHECKMATE）",
+ "plies": 38,
+ "opponent": "Fairy-Stockfish 14.0.1 chess (Skill Level 20, 100ms/手)",
+ "jev_moves": 19,
+ "jev_requests": 37,
+ "jev_failed": 0,
+ "input_tokens": 77639,
+ "output_tokens": 8526,
+ "cost_usd_list_price": 0.003261,
+ "jev_ms_p50": 2477
+}

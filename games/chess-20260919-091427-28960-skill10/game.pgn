@@ -1,0 +1,9 @@
+[Event "Jev vs Fairy-Stockfish"]
+[Site "?"]
+[Date "2026.09.19"]
+[Round "?"]
+[White "Jev (typesafe/jev-latest, ロリポップ！AIゲートウェイ経由)"]
+[Black "Fairy-Stockfish 14.0.1 chess (Skill Level 10, 100ms/手)"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 c6 3. Nxe5 Nf6 4. Nc3 d5 5. exd5 Bb4 6. dxc6 Qe7 7. d4 Bxc3+ 8. bxc3 Nxc6 9. Bc4 Nxe5 10. dxe5 Qxe5+ 11. Kd2 Ne4+ 12. Ke2 Nxc3+ 13. Kf1 Nxd1 14. Rb1 Qc5 15. Bb5+ Bd7 16. Bxd7+ Kxd7 17. Rxb7+ Kc6 18. Rxf7 Qc4+ 19. Kg1 Qxf7 20. Be3 Rhe8 21. a3 Rxe3 22. h3 Re2 23. Kh2 Qf4+ 24. Kg1 Re5 25. Kf1 Qc4+ 26. Kg1 Qf4 27. Kf1 g5 28. f3 Qd4 29. Rg1 Qf2# 0-1
